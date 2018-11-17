@@ -5,8 +5,8 @@
 unsigned int m = 0;
 unsigned int n = 0;
 
-//int main(void)
-int servopq(void)
+int main(void)
+
 {
     WDTCTL = WDTPW + WDTHOLD;   // Stop WDT
     BCSCTL1 = CALBC1_1MHZ;      //MCLK e SMCLK @ 1MHz
