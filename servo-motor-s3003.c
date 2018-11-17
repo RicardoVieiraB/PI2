@@ -1,13 +1,11 @@
 #include <msp430g2553.h>
 
 #define PWM BIT0
-#define FREQ 5000
 
 unsigned int k = 0;
 unsigned int l = 0;
 
-//int main(void)
-int servoporta(void)
+int main(void)
 {
     WDTCTL = WDTPW + WDTHOLD;   // Stop WDT
     BCSCTL1 = CALBC1_1MHZ;      //MCLK e SMCLK @ 1MHz
@@ -15,11 +13,11 @@ int servoporta(void)
 
     P1OUT &= ~PWM;
     P1DIR |= PWM;
-    P1OUT |= PWM;
-
-    TA0CCR1 = 250;
-    TA0CCR2 = 2350;
-    TA0CCR0 = TA0CCR2;
+    P1OUT |= PWM;               //inicia PWM sempre em nivel logico alto
+    //valores iniciais do timer
+    TA0CCR1 = 250;              //contagens q PWM fica em HIGH
+    TA0CCR2 = 2350;             //contagens q PWM fica em LOW
+    TA0CCR0 = TA0CCR2;          //p/ zerar timer
 
     TA0CTL = TASSEL_2 + ID_3 + MC_1; // clk/8 modo up
 
