@@ -1,13 +1,11 @@
 #include <msp430g2553.h>
 
-#define PWM BIT1
-
+#define PWM BIT
 
 unsigned int i = 0;
 unsigned int j = 0;
 
-//int main(void)
-int servooregano(void)
+int main(void)
 {
     WDTCTL = WDTPW + WDTHOLD;   // Stop WDT
     BCSCTL1 = CALBC1_1MHZ;      //MCLK e SMCLK @ 1MHz
