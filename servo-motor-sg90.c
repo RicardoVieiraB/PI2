@@ -1,6 +1,6 @@
 #include <msp430g2553.h>
 
-#define PWM BIT
+#define PWM BIT0
 
 unsigned int i = 0;
 unsigned int j = 0;
