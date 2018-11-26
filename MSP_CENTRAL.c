@@ -32,8 +32,9 @@ void config_geral()
     P1SEL2 = P1SEL = MOSI+MISO+SCLK;
   
     P2OUT &= ~(SQUEIJO|SPRES|SOREG|LED38K);
-    P2DIR |= SQUEIJO|SPRES|SOREG|LED38K|IOSTART|IOCTL;
-    P2OUT |= IOSTART|IOCTL;
+    P2DIR |= SQUEIJO|SPRES|SOREG|LED38K|IOCTL;
+    P2DIR &= ~IOSTART;
+    P2OUT |= IOCTL;
     P2OUT &= ~(SQUEIJO|SPRES|SOREG|LED38K);
   
     UCA0CTL1 = UCSWRST;                                //reseta para configurar
@@ -250,21 +251,29 @@ int main(void)
   
   while(1){
     
-    while((IFG2&UCA0RXIFG)==0);
-    IFG2 &= ~UCA0RXIFG;
-    if(UCA0RXBUF==0x01){
-      P2OUT &= ~IOCTL;
-      atraso(1000);
-      P2OUT |= IOCTL;
+    	while((IFG2&UCA0RXIFG)==0);
+    	IFG2 &= ~UCA0RXIFG;
+    	if(UCA0RXBUF==0x01){
+    		P2OUT &= ~IOCTL;
+    		atraso(1000);
+     		P2OUT |= IOCTL;
         
-      P2DIR &= ~IOCTL;
-      Send_Data(0xAB);
-      e = 1;
-      }
-      
-      if(e==1){
-        ...
-      }
+      		P2DIR &= ~IOCTL;
+      		Send_Data(0xAB);
+      		e = 1;
+	}
+    	while(e==1){
+	     	if((P2IN&IOCTL)==0){
+			detectar_solido();
+			
+		}
+		if((P2IN&IOSTART)==0){
+			P2DIR |= IOSTART;
+        		//...
+			Send_Data(0xBA);
+			e = 0;
+		}
+    	}
   }
   
 }
