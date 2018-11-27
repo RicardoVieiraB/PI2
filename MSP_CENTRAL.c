@@ -70,6 +70,7 @@ void servo_queijo()
     
     i=0;
     j=0;
+    k=0;
     TACTL |= TACLR;
     TA0CCR1 = 210;              //contagens q o PWM fica em HIGH          
     TA0CCR2 = 2390;             //contagens q o PWM fica em LOW
@@ -81,7 +82,7 @@ void servo_queijo()
     
     P2OUT |= SQUEIJO;
   
-    while(1)
+    while(k<=2)
     { //gerador de PWM
         while((TA0CCTL1 & CCIFG)==0); //confere primeiro register e inverte flag
         P2OUT ^= SQUEIJO;
@@ -95,6 +96,7 @@ void servo_queijo()
             TA0CCR1 = 100;   //parado entre 180 e 195
             TA0CCR2 = 2500;
             TA0CCR0 = TA0CCR2;
+	    k++;	
         }
         if(j==200){   //valores para outro sentido
             TA0CCR1 = 210;
@@ -112,6 +114,7 @@ void servo_presunto()
 {    
     i=0;
     j=0;
+    k=0;
     TACTL |= TACLR;
     TA0CCR1 = 210;              //contagens q o PWM fica em HIGH          
     TA0CCR2 = 2390;             //contagens q o PWM fica em LOW
@@ -123,7 +126,7 @@ void servo_presunto()
     
     P2OUT |= SPRES;
   
-    while(1)
+    while(k<=2)
     { //gerador de PWM
         while((TA0CCTL1 & CCIFG)==0); //confere primeiro register e inverte flag
         P2OUT ^= SPRES;
@@ -137,6 +140,7 @@ void servo_presunto()
             TA0CCR1 = 100;   //parado entre 180 e 195
             TA0CCR2 = 2500;
             TA0CCR0 = TA0CCR2;
+	    k++;
         }
         if(j==200){   //valores para outro sentido
             TA0CCR1 = 210;
@@ -154,6 +158,7 @@ void servo_oregano()
 {
     i=0;
     j=0;
+    k=0;
     TACTL |= TACLR;
     TA0CCR1 = 290;              //contagens q PWM fica em HIGH
     TA0CCR2 = 2310;             //contagens q PWM fica em LOW
@@ -165,7 +170,7 @@ void servo_oregano()
   
     P2OUT |= SOREG;
 
-    while(1)
+    while(k<=2)
     {
         while((TA0CCTL1 & CCIFG)==0);
         P2OUT ^= SOREG;
@@ -179,6 +184,7 @@ void servo_oregano()
             TA0CCR1 = 80;
             TA0CCR2 = 2520;
             TA0CCR0 = TA0CCR2;
+	    k++;
         }
         if(j==200){
             TA0CCR1 = 290;
@@ -203,12 +209,13 @@ void motor_passo(volatile unsigned int p, volatile unsigned int d)
     }else{
       P1OUT |= DIRPASSO;
     }
-    P1OUT &= ~(CLKPASSO|ENPASSO);
+    P1OUT &= ~CLKPASSO;
   
     while(p--)
     {
+       P1OUT &= ~ENPASSO;
        while((TA0CTL & TAIFG)==0);
-       P2OUT ^= CLKPASSO;
+       P1OUT ^= CLKPASSO;
        TA0CTL &= ~TAIFG;
     }
     P1OUT &= ~(CLKPASSO);
