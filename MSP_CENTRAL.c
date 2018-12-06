@@ -10,13 +10,15 @@
 #define SOREG BIT2                 //P2.2        servo dispersor de oregano
 #define IOSTART BIT3               //P2.3        pino entrada(start da maquina)/saida(ativação servo molho)
 #define IOCTL BIT4                 //P2.4        pino entrada(ativação LED IR)/saida(ativação servo porta)
-#define LED38K BIT5                //P2.4        pino saida para LED IR
+#define LED38K BIT5                //P2.5        pino saida para LED IR
+//#define BTN BIT7                   //P2.7        botao para voltar bandeja
 
 #define MISO BIT1           //P1.1        master input/slave output SPI
 #define MOSI BIT2           //P1.2        master output/slave input SPI
 #define SCLK BIT4         //P1.4        master CLK SPI
 
 volatile unsigned int i=0,j=0,k=0,e=0;
+volatile unsigned int x=0,y=0;
 
 void config_geral()                                       //configura fonte de clk, pinos e comunicação SPI
 {
@@ -30,12 +32,14 @@ void config_geral()                                       //configura fonte de c
     P1OUT &= ~(CLKPASSO|DIRPASSO|BOMBA);                  //iniciando portas em nivel logico baixa
     P1OUT |= FORNO|ENPASSO;                               //iniciando portas em nivel logico alto
 
+    //P2SEL = P2SEL2 = ~BTN;
+
     P2OUT &= ~(SQUEIJO|SPRES|SOREG|LED38K|IOCTL|IOSTART);
     P2DIR |= SQUEIJO|SPRES|SOREG|LED38K|IOCTL;            //portas P2.x como saídas
     P2OUT &= ~(SQUEIJO|SPRES|SOREG|LED38K);               //inciam com nivel logico baixo
     P2OUT |= IOCTL;                                       //inicia P2.4 em nivel logico alto
 
-    P2DIR &= ~IOSTART                                      //porta P2.3 primeiramente como entrada
+    P2DIR &= ~(IOSTART);                                      //porta P2.3 primeiramente como entrada
     P2REN |= IOSTART;                                      //habilita resistor PU/PD
     P2OUT |= IOSTART;                                      //pull-up
 
@@ -48,9 +52,9 @@ void config_geral()                                       //configura fonte de c
 
 }
 
-void send_data(volatile unsigned char c)
+void send_data(volatile unsigned int c)
 {
-    IFG2 &= ~UCA0TXIFG;
+    //IFG2 &= ~UCA0TXIFG;
     while((IFG2&UCA0TXIFG)==0);      //aguarda preenchimento do buffer
     UCA0TXBUF = c;                   //guarda variável no buffer
     IFG2 &= ~UCA0TXIFG;              //zera flag para nova interação
@@ -85,7 +89,7 @@ void servo_queijo()                  //controla giro do servo do queijo
     TA0CCTL1 &= ~CCIFG;
     TA0CCTL2 &= ~CCIFG;
 
-    while(k<=2)
+    while(k<=1)
     {
         while((TA0CCTL1 & CCIFG)==0); //gerador de PWM
         P2OUT ^= SQUEIJO;
@@ -95,12 +99,12 @@ void servo_queijo()                  //controla giro do servo do queijo
         while((TA0CCTL2 & CCIFG)==0);
         P2OUT ^= SQUEIJO;
         TA0CCTL2 &= ~CCIFG;
-        if(i==50){                   //inverte sentido de giro
+        if(i==110){                   //inverte sentido de giro
             TA0CCR1 = 150;           //duty de 6%
             TA0CCR2 = 2450;          //faz girar em sentido horario
             TA0CCR0 = TA0CCR2;
         }
-        if(j==100){                  //inverte sentido de giro
+        if(j==220){                  //inverte sentido de giro
             TA0CCR1 = 210;           //duty de 8%
             TA0CCR2 = 2390;          //faz girar em sentido anti-horario
             TA0CCR0 = TA0CCR2;
@@ -128,7 +132,7 @@ void servo_presunto()                //controla giro do servo do presunto
     TA0CCTL1 &= ~CCIFG;
     TA0CCTL2 &= ~CCIFG;
 
-    while(k<=2)
+    while(k==0)
     {
         while((TA0CCTL1 & CCIFG)==0); //gerador de PWM
         P2OUT ^= SPRES;
@@ -138,12 +142,12 @@ void servo_presunto()                //controla giro do servo do presunto
         while((TA0CCTL2 & CCIFG)==0);
         P2OUT ^= SPRES;
         TA0CCTL2 &= ~CCIFG;
-        if(i==50){                   //inverte sentido de giro
+        if(i==60){                   //inverte sentido de giro
             TA0CCR1 = 150;           //duty 6%
             TA0CCR2 = 2450;          //sentido horario
             TA0CCR0 = TA0CCR2;
         }
-        if(j==100){                  //inverte sentido de giro
+        if(j==120){                  //inverte sentido de giro
             TA0CCR1 = 210;           //duty 8%
             TA0CCR2 = 2390;          //sentido anti-horario
             TA0CCR0 = TA0CCR2;
@@ -161,7 +165,7 @@ void motor_passo(volatile unsigned int p, volatile unsigned int d) //controla qu
 
     p = p*2;                         //multiplica passos*2, pois o while gera um periodo de clk a cada 2 loops
     TA0CTL |= TACLR;                 //reinicia configs do timer
-    TA0CCR0 = 140-1;                 //define quantos passos por segundo o motor dará
+    TA0CCR0 = 110-1;                 //define quantos passos por segundo o motor dará
     TA0CTL = TASSEL_2 + ID_3 + MC_1; //clk/8 modo up
     P1OUT &= ~CLKPASSO;              //inicia clk em 0
     P1OUT &= ~ENPASSO;               //define enable em 0, DRIVER ATIVADO
@@ -198,7 +202,7 @@ void servo_oregano()                 //controla giro servo do oregano
     TA0CCTL1 &= ~CCIFG;
     TA0CCTL2 &= ~CCIFG;
 
-    while(k<=2)
+    while(k==0)
     {
         while((TA0CCTL1 & CCIFG)==0); //gerador de PWM
         P2OUT ^= SOREG;
@@ -208,18 +212,19 @@ void servo_oregano()                 //controla giro servo do oregano
         while((TA0CCTL2 & CCIFG)==0);
         P2OUT ^= SOREG;
         TA0CCTL2 &= ~CCIFG;
-        if(i==50){                    //valores para 0°
+        if(i==100){                    //valores para 0°
             TA0CCR1 = 90;             //duty de 2,5%
             TA0CCR2 = 2510;
             TA0CCR0 = TA0CCR2;
+            k++;
         }
-        if(j==100){                   //valores para 180°
+        if(j==200){                   //valores para 180°
             TA0CCR1 = 280;            //duty de 12%
             TA0CCR2 = 2320;
             TA0CCR0 = TA0CCR2;
             i = 0;
             j = 0;
-            k++;
+            //k++;
          }
      }
     P2OUT &= ~SOREG;                  //mantem pino PWM em nivel logico baixo quando fora do funcionamento
@@ -240,7 +245,7 @@ void molho()                          //função que ativa bomba de molho e envi
     P2REN |= IOSTART;                 //habilita res PU/PD
     P2OUT |= IOSTART;                //pull-up
 
-    atraso(6000);
+    atraso(10000);
     P1OUT &= ~BOMBA;                  //desliga bomba
     atraso(100);
 
@@ -275,7 +280,7 @@ int main(void)
 
         while((IFG2&UCA0RXIFG)==0);   //aguarda comunicação SPI
         IFG2 &= ~UCA0RXIFG;           //zera flag para proxima interação
-            if((UCA0RXBUF==0x01) | (UCA0RXBUF==0x02) | (UCA0RXBUF==0x03) | (UCA0RXBUF==0x04) | (UCA0RXBUF==0x05) | (UCA0RXBUF==0x06)){
+            if((UCA0RXBUF==0x02) | (UCA0RXBUF==0x04) | (UCA0RXBUF==0x06)){
                 //confere o que receu no buffer
                 P2OUT &= ~IOCTL;      //pino P2.4 em nivel logico alto para outro MSP
                 atraso(1000);
@@ -283,11 +288,54 @@ int main(void)
 
                 atraso(100);
                 P2DIR &= ~IOCTL;      //pino P2.4 como entrada para novas funções
-                P2REN |= IOCTL;       //habilita resistor PU/PD
-                P2OUT |= IOCTL;       //pull-up
                 atraso(100);
                 e = 1;                //flag de controle para entrar na parte de automação
                 send_data(0x00);      //carrega buffer com variável
+                x = 1;
+                y = 1;
+            }
+            if((UCA0RXBUF==0x01)){
+                //confere o que receu no buffer
+                P2OUT &= ~IOCTL;      //pino P2.4 em nivel logico alto para outro MSP
+                atraso(1000);
+                P2OUT |= IOCTL;
+
+                atraso(100);
+                P2DIR &= ~IOCTL;      //pino P2.4 como entrada para novas funções
+                atraso(100);
+                e = 1;                //flag de controle para entrar na parte de automação
+                send_data(0x00);      //carrega buffer com variável
+                x = 0;
+                y = 0;
+            }
+            if((UCA0RXBUF==0x03)){
+                //confere o que receu no buffer
+                P2OUT &= ~IOCTL;      //pino P2.4 em nivel logico alto para outro MSP
+                atraso(1000);
+                P2OUT |= IOCTL;
+
+                atraso(100);
+                P2DIR &= ~IOCTL;      //pino P2.4 como entrada para novas funções
+                atraso(100);
+                e = 1;                //flag de controle para entrar na parte de automação
+                send_data(0x00);      //carrega buffer com variável
+                x = 0;
+                y = 1;
+            }
+            if ((UCA0RXBUF==0x05)){
+                //confere o que receu no buffer
+                P2OUT &= ~IOCTL;      //pino P2.4 em nivel logico alto para outro MSP
+                atraso(1000);
+                P2OUT |= IOCTL;
+
+                atraso(100);
+                P2DIR &= ~IOCTL;      //pino P2.4 como entrada para novas funções
+                atraso(100);
+                e = 1;                //flag de controle para entrar na parte de automação
+                send_data(0x00);      //carrega buffer com variável
+                x = 1;
+                y = 0;
+
             }
 
         while(e==1){                        //while para a automação
@@ -299,6 +347,12 @@ int main(void)
             //0x05 mussarela presunto
             //0x06 completa
 
+//            if((P2IN&BTN)==0){
+//
+//                motor_passo(10,0);
+//
+//            }
+
             if((P2IN&IOCTL)==0){          //entrada para ativação do LED IR a 38 kHz
 
                 detectar_solido();        //gera pulsos por um periodo de tempo
@@ -309,7 +363,7 @@ int main(void)
 
                 atraso(1100);
                 P2DIR |= IOCTL|IOSTART;
-                P2DIR |= IOCTL|IOSTART;
+                P2OUT |= IOCTL|IOSTART;
                 atraso(100);
 
                 P1OUT &= ~FORNO;           //nivel logico baixo para ativação do forno em modo assar com MSP_FORNO
@@ -323,11 +377,19 @@ int main(void)
                 atraso(500);
                 motor_passo(15000,1);
                 atraso(500);
+
+                if(x==1){
                 servo_presunto();         //ativa servo do presunto
+                }
+
                 atraso(500);
                 motor_passo(14000,1);
                 atraso(500);
+
+                if(y==1){
                 servo_oregano();          //ativa servo do oregano
+                }
+
                 atraso(500);
 
                 P2OUT &= ~IOCTL;          //nivel logico baixo em P2.4 para MSP_AUX controlar servo da porta (abrir e fechar)
@@ -338,11 +400,11 @@ int main(void)
                 motor_passo(7000,1);
                 atraso(500);
 
-                atraso(10000);
-                //atraso(10000);          //atrasos para aguardar pizza assar
-                //atraso(10000);
-                //atraso(10000);
-                //atraso(10000);
+                atraso(60000);
+                atraso(60000);          //atrasos para aguardar pizza assar
+                atraso(60000);
+                atraso(60000);
+                atraso(60000);
                 //...
                 P1OUT |= FORNO;          //desliga modo assar do forno
                 atraso(1000);
@@ -352,16 +414,19 @@ int main(void)
                 P2OUT |= IOCTL;
                 atraso(22000);
 
-                motor_passo(30000,0);
-
-                atraso(10000);
-                motor_passo(30000,0);
-                motor_passo(30000,0);
-
-                atraso(500);
+                motor_passo(26000,0);
                 send_data(0xFF);
+                atraso(20000);
+                send_data(0x00);
+                motor_passo(30000,0);
+                motor_passo(30000,0);
+                motor_passo(4000,0);
+
+                //atraso(500);
                 atraso(2000);
                 e = 0;
+                //x = 0;
+                //y = 0;
             }
         }
     }
